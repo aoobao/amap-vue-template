@@ -15,6 +15,7 @@ let baseAxios = axios.create({
 })
 
 let __token = null
+let __http_one_only = false
 
 // 发送信息钩子
 baseAxios.interceptors.request.use(
@@ -46,7 +47,9 @@ baseAxios.interceptors.response.use(
   }
 )
 
-baseAxios.getUrl = (url, params = {}) => {
+baseAxios.getUrl = (url, params = {}, {
+  showErrflag = true
+}) => {
   return new Promise(resolve => {
     baseAxios
       .get(url, {
@@ -55,6 +58,13 @@ baseAxios.getUrl = (url, params = {}) => {
       .then(
         response => {
           let retData = response.data
+          if (retData.code !== 0) {
+            console.warn(url, params, retData)
+          }
+          retData.isok = (retData.code === 0)
+          if (showErrflag) {
+            ifErr(retData)
+          }
           resolve(retData)
         },
         error => {
@@ -66,7 +76,10 @@ baseAxios.getUrl = (url, params = {}) => {
   })
 }
 
-baseAxios.postUrl = (url, data = {}, showErrflag = true) => {
+baseAxios.postUrl = (url, data = {}, {
+  showErrflag = true,
+  postOne = false
+}) => {
   let headers = {}
   let opts = data
   if (Object.prototype.toString.call(data) !== '[object FormData]') {
@@ -76,6 +89,15 @@ baseAxios.postUrl = (url, data = {}, showErrflag = true) => {
     headers['Content-Type'] = 'multipart/form-data'
   }
 
+  if (postOne) {
+    // 已经有请求存在
+    if (__http_one_only) {
+      errMessage('请求中,请稍后...')
+      return
+    }
+    __http_one_only = true
+  }
+
   return new Promise(resolve => {
     baseAxios
       .post(url, opts, {
@@ -83,16 +105,23 @@ baseAxios.postUrl = (url, data = {}, showErrflag = true) => {
       })
       .then(
         response => {
+          if (postOne) {
+            __http_one_only = false
+          }
           let retData = response.data
           if (retData.code != 0) {
             console.warn(url, data, retData)
           }
+          retData.isok = (retData.code === 0)
           if (showErrflag) {
             ifErr(retData)
           }
           resolve(retData)
         },
         error => {
+          if (postOne) {
+            __http_one_only = false
+          }
           console.warn(error)
           let errData = res.error('服务器错误', -1, error)
           resolve(errData)
