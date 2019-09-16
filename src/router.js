@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import app from '@/assets/js/utils'
+import store from './store/index'
 
 import Home from './views/Home'
 import MapView from './views/MapView'
@@ -52,9 +53,11 @@ router.beforeEach((to, from, next) => {
       next('/login');
       return;
     } else {
+      store.commit('setRouteName', to)
       next();
     }
   } else {
+    store.commit('setRouteName', to)
     next();
   }
 });

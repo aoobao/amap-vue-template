@@ -79,7 +79,7 @@ baseAxios.getUrl = (url, params = {}, {
 baseAxios.postUrl = (url, data = {}, {
   showErrflag = true,
   postOne = false
-}) => {
+} = {}) => {
   let headers = {}
   let opts = data
   if (Object.prototype.toString.call(data) !== '[object FormData]') {
